@@ -15,6 +15,7 @@ cp src/Ext-Info.plist "$APPEX/Contents/Info.plist"
 
 cp ../magicbar/content.js ../magicbar/background.js manifest.json "$APPEX/Contents/Resources/"
 cp -R ../magicbar/icons "$APPEX/Contents/Resources/icons"
+cp src/icons/*.png "$APPEX/Contents/Resources/icons/"
 
 swiftc -O src/App.swift -o "$OUT/Contents/MacOS/MagicBar" -framework AppKit -framework SafariServices
 swiftc -O -application-extension src/Handler.swift -o "$APPEX/Contents/MacOS/MagicBarExtension" \

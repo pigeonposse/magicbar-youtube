@@ -111,7 +111,7 @@
     const watchUrl = `https://www.youtube.com/${vid.short ? 'shorts/' : 'watch?v='}${vid.id}`;
     let title = '', channel = '', channelKey = '';
     try {
-      const r = await fetch('/oembed?format=json&url=' + encodeURIComponent(watchUrl));
+      const r = await fetch(location.origin + '/oembed?format=json&url=' + encodeURIComponent(watchUrl));
       const j = await r.json();
       title = j.title; channel = j.author_name;
       if (j.author_url) channelKey = decodeURIComponent(new URL(j.author_url).pathname);
@@ -164,7 +164,7 @@
      con su sesión y extrae los datos de ytInitialData. */
 
   async function fetchPage(path, signal) {
-    const r = await fetch(path, { credentials: 'include', signal });
+    const r = await fetch(location.origin + path, { credentials: 'include', signal });
     if (!r.ok) return { json: null, html: '' };
     const html = await r.text();
     const m = html.match(/ytInitialData["']?\]?\s*=\s*(\{.+?\})\s*;\s*(?:<\/script>|var )/s);
@@ -194,7 +194,7 @@
       let token = null;
       walk(cur, (n) => { if (!token && n.continuationCommand && n.continuationCommand.token) token = n.continuationCommand.token; });
       if (!token) break;
-      const r = await fetch(`/youtubei/v1/browse?prettyPrint=false&key=${key}`, {
+      const r = await fetch(`${location.origin}/youtubei/v1/browse?prettyPrint=false&key=${key}`, {
         method: 'POST', credentials: 'include',
         headers: Object.assign({ 'Content-Type': 'application/json', 'X-Goog-AuthUser': '0', 'X-Origin': location.origin },
           auth ? { Authorization: auth } : {}),
@@ -324,7 +324,7 @@
 
   async function ogAvatar(ch, path) {
     try {
-      const r = await fetch(path, { credentials: 'include' });
+      const r = await fetch(location.origin + path, { credentials: 'include' });
       if (!r.ok) return false;
       const html = await r.text();
       const m = html.match(/<meta property="og:image" content="([^"]+)"/);
@@ -412,7 +412,7 @@
   // título, canal y enlace del canal de forma fiable para cualquier vídeo.
   async function resolveInfo(v) {
     try {
-      const r = await fetch('/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + v.id));
+      const r = await fetch(location.origin + '/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + v.id));
       if (!r.ok) throw 0;
       const j = await r.json();
       v.title = j.title || v.title;
@@ -813,7 +813,7 @@
     const cfg = innertubeCfg();
     if (!cfg) return null;
     const auth = await sapisidHash().catch(() => '');
-    const r = await fetch(`/youtubei/v1/${endpoint}?prettyPrint=false&key=${cfg.key}`, {
+    const r = await fetch(`${location.origin}/youtubei/v1/${endpoint}?prettyPrint=false&key=${cfg.key}`, {
       method: 'POST', credentials: 'include', signal,
       headers: Object.assign({ 'Content-Type': 'application/json', 'X-Goog-AuthUser': '0', 'X-Origin': location.origin }, auth ? { Authorization: auth } : {}),
       body: JSON.stringify(Object.assign({ context: { client: { clientName: 'WEB', clientVersion: cfg.version, hl: document.documentElement.lang || 'es', gl: cfg.gl || undefined } } }, body)),
