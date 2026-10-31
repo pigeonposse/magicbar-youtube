@@ -98,8 +98,8 @@ Safari loads web extensions through a small app wrapper. You do **not** need Xco
 
    ```bash
    ./safari/build-clt.sh
-   cp -R "safari/build/MagicBar for YouTube.app" ~/Applications/
-   open ~/Applications/"MagicBar for YouTube.app"
+   cp -R "safari/build/MagicBar for YouTube.app" /Applications/
+   open /Applications/"MagicBar for YouTube.app"
    ```
 
 2. In Safari, enable **Develop > Allow Unsigned Extensions** (turn on the Develop menu in Settings > Advanced first). Safari asks for this again after every restart, because the app is ad-hoc signed.
