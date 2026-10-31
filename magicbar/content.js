@@ -163,13 +163,18 @@
      Lee las mismas páginas que ve el usuario (/feed/history, /feed/channels)
      con su sesión y extrae los datos de ytInitialData. */
 
+  let lastDbg = '';
+  const dbg = (m) => { lastDbg = m; try { console.warn('[MagicBar]', m); } catch { /* sin consola */ } };
   async function fetchPage(path, signal) {
-    const r = await fetch(location.origin + path, { credentials: 'include', signal });
-    if (!r.ok) return { json: null, html: '' };
+    let r;
+    try { r = await fetch(location.origin + path, { credentials: 'include', signal }); }
+    catch (e) { dbg(path + ' fetch error: ' + (e && e.message)); throw e; }
+    if (!r.ok) { dbg(path + ' HTTP ' + r.status); return { json: null, html: '' }; }
     const html = await r.text();
     const m = html.match(/ytInitialData["']?\]?\s*=\s*(\{.+?\})\s*;\s*(?:<\/script>|var )/s);
     let json = null;
-    if (m) { try { json = JSON.parse(m[1]); } catch { /* formato distinto */ } }
+    if (m) { try { json = JSON.parse(m[1]); } catch (e) { dbg(path + ' JSON ' + e.message); } }
+    else dbg(path + ' sin ytInitialData (' + html.length + ' bytes)');
     return { json, html };
   }
 
@@ -1133,7 +1138,7 @@
   function render() {
     try { renderInner(); } catch (e) {
       console.error('[MagicBar] error al pintar', e);
-      try { panel.replaceChildren(h('div', { class: 'empty', text: t(30) })); navEls = []; } catch { /* sin panel */ }
+      try { panel.replaceChildren(h('div', { class: 'empty', text: t(30) + ' · ' + (e && e.message) + ((e && e.stack) ? ' @ ' + String(e.stack).split('\n')[0].slice(0, 80) : '') })); navEls = []; } catch { /* sin panel */ }
     }
   }
 
@@ -1255,7 +1260,7 @@
     const news = data.feed.slice(0, LIMITS.feedVideos);
     c2.append(sectionTitle(t(3), morePill('/feed/subscriptions')));
     if (news.length) news.forEach((v) => c2.append(videoCard(v)));
-    else c2.append(h('div', { class: 'empty', text: syncing ? t(10) : t(9) }));
+    else c2.append(h('div', { class: 'empty', text: syncing ? t(10) : t(9) + (lastDbg ? ' · ' + lastDbg : '') }));
 
     /* columna 3: últimos 3 vídeos del historial + 4 canales más vistos */
     const c3 = h('div', { class: 'col' });
