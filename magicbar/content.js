@@ -22,8 +22,8 @@
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
       Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
-      if (data.v !== 6) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 6; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 7) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 7; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
@@ -164,7 +164,7 @@
      Lee las mismas páginas que ve el usuario (/feed/history, /feed/channels)
      con su sesión y extrae los datos de ytInitialData. */
 
-  let lastDbg = '', searchDbg = '';
+  let lastDbg = '', searchDbg = '', enrichWhy = '';
   const dbg = (m) => { lastDbg = m; try { console.warn('[MagicBar]', m); } catch { /* sin consola */ } };
   async function fetchPage(path, signal) {
     let r;
@@ -371,10 +371,10 @@
         const rs = await innertube('navigation/resolve_url', { url: 'https://www.youtube.com' + ch.url });
         id = rs && rs.endpoint && rs.endpoint.browseEndpoint && rs.endpoint.browseEndpoint.browseId;
       }
-      if (!id) return false;
+      if (!id) { enrichWhy = 'sin id ' + JSON.stringify([ch.key, ch.url]); return false; }
       const j = await innertube('browse', { browseId: id });
       const cm = j && j.metadata && j.metadata.channelMetadataRenderer;
-      if (!cm) return false;
+      if (!cm) { enrichWhy = enrichWhy || ('sin metadata ' + JSON.stringify(Object.keys(j || {}))); return false; }
       const texts = [];
       walk(j.header, (n) => { if (typeof n.content === 'string' && n.content.length < 60) texts.push(n.content); });
       const handle = texts.find((x) => x.startsWith('@')) || '';
@@ -392,7 +392,7 @@
       if (/CHECK_CIRCLE|VERIFIED|OFFICIAL_ARTIST/.test(JSON.stringify(j.header || {}))) ch.verified = true;
       ch.enrichedAt = Date.now();
       return !!av;
-    } catch { return false; }
+    } catch (e) { enrichWhy = 'excepción ' + (e && e.message); return false; }
   }
 
   async function fillAvatars() {
@@ -408,6 +408,7 @@
     try {
       const got = await Promise.all(todo.map(async (c) => (await enrichChannel(c)) || (!c.avatar && (await fetchChannelAvatar(c)))));
       console.debug('[MagicBar] fotos de canal', todo.map((c, i) => c.name + (got[i] ? ' ✓' : ' ✗')));
+      lastDbg = 'enrich ' + got.filter(Boolean).length + '/' + todo.length + ' why=' + enrichWhy + ' c0=' + JSON.stringify([todo[0].key, todo[0].id, todo[0].url, todo[0].avatar && 'av', todo[0].stats]);
       save();
     } finally {
       avatarsBusy = false;
@@ -831,7 +832,8 @@
       headers: Object.assign({ 'Content-Type': 'application/json', 'X-Goog-AuthUser': '0', 'X-Origin': location.origin }, auth ? { Authorization: auth } : {}),
       body: JSON.stringify(Object.assign({ context: { client: { clientName: 'WEB', clientVersion: cfg.version, hl: document.documentElement.lang || 'es', gl: cfg.gl || undefined } } }, body)),
     });
-    return r.ok ? r.json() : null;
+    if (!r.ok) { enrichWhy = endpoint + ' HTTP ' + r.status; return null; }
+    return r.json();
   }
 
   const SP_CHANNELS = 'EgIQAg==';
@@ -1128,7 +1130,7 @@
       avatar(c),
       h('span', { class: 'cinfo' },
         h('span', { class: 'cn' }, c.name, c.verified && verifiedIcon(), sub && c.remote !== undefined && h('span', { class: 'tag', text: t(15) })),
-        h('span', { class: 'cm', text: c.meta || c.stats || (c.count ? countLabel(c.count) : (sub ? t(15) : '')) })));
+        h('span', { class: 'cm', text: c.meta || c.stats || (sub ? t(15) : '') })));
   }
 
   const topChannels = (list) =>
