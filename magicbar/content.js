@@ -21,8 +21,9 @@
     if (!alive()) return;
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
-      if (data.v !== 5) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 5; data.channels = {}; data.lastSync = 0;
+      Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
+      if (data.v !== 6) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 6; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
@@ -58,7 +59,7 @@
   function findChannel(key, id, name) {
     if (key && data.channels[key]) return data.channels[key];
     const n = (name || '').toLowerCase();
-    return Object.values(data.channels).find((c) => (id && c.id === id) || (n && c.name.toLowerCase() === n));
+    return Object.values(data.channels).find((c) => (id && c.id === id) || (n && (c.name || '').toLowerCase() === n));
   }
 
   function bumpChannel(v, now, bump) {
@@ -315,6 +316,7 @@
   }
 
   function mergeSub(c) {
+    if (!c || !c.name) return;
     let ch = findChannel(c.url, c.id, c.name);
     if (!ch) {
       const key = c.url || 'name:' + c.name;
@@ -350,7 +352,7 @@
       const n = ch.name.trim().toLowerCase();
       const list = json ? extractChannels(json) : [];
       const hit = list.find((c) => c.name.trim().toLowerCase() === n) ||
-        list.find((c) => n.length > 6 && c.name.toLowerCase().startsWith(n.slice(0, 12)));
+        list.find((c) => n.length > 6 && (c.name || '').toLowerCase().startsWith(n.slice(0, 12)));
       if (!hit) return false;
       if (!ch.id) ch.id = hit.id;
       if (!ch.url) ch.url = hit.url;
@@ -437,7 +439,7 @@
     const old = data.channels, next = {};
     Object.values(old).forEach((c) => { if (c.sub) next[c.key] = Object.assign({}, c, { count: 0 }); });
     const find = (key, name) => Object.values(next).find((c) =>
-      (key && c.key.toLowerCase() === key.toLowerCase()) || c.name.toLowerCase() === name.toLowerCase());
+      (key && c.key.toLowerCase() === key.toLowerCase()) || (c.name || '').toLowerCase() === (name || '').toLowerCase());
     for (const v of Object.values(data.videos)) {
       if (!v.ok || !v.channel) continue;
       let ch = find(v.channelKey, v.channel);
@@ -495,6 +497,7 @@
       data.lastSync = t0;
       const nv = vids.filter((v) => !v.short);
       lastDbg += ' | long ' + nv.length + ' ch ' + nv.filter((v) => v.channel).length + ' key ' + nv.filter((v) => v.channelKey).length + ' trusted ' + nv.filter((v) => v.trusted).length + ' first ' + JSON.stringify(nv[0] || null).slice(0, 260);
+      lastDbg += ' | c0 ' + JSON.stringify(chans[0] || null).slice(0, 200) + ' | store0 ' + JSON.stringify(Object.values(data.channels)[0] || null).slice(0, 200);
       lastDbg += ' | names ' + chans.filter((c) => c.name).length + '/' + chans.length + ' vids ' + vids.length + ' news ' + news.length;
       data.syncStat = { videos: vids.length, channels: chans.length, news: news.length };
       save();
