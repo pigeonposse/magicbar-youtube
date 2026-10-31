@@ -92,17 +92,20 @@ MagicBar reads your account with **your own signed-in session**, from inside `yo
 
 ### Safari (macOS)
 
-Safari loads web extensions through a small app wrapper, so the Safari version is generated from the same sources as the Chromium one. You need macOS with **Xcode** installed (the Command Line Tools alone are not enough).
+Safari loads web extensions through a small app wrapper. You do **not** need Xcode: the Command Line Tools (`xcode-select --install`) are enough.
 
-1. Run the build script:
+1. Build and install the app:
 
    ```bash
-   ./safari/build.sh
+   ./safari/build-clt.sh
+   cp -R "safari/build/MagicBar for YouTube.app" ~/Applications/
+   open ~/Applications/"MagicBar for YouTube.app"
    ```
 
-2. Open `safari/project/MagicBar for YouTube/MagicBar for YouTube.xcodeproj` in Xcode and press **Run**.
-3. In Safari, open **Settings > Extensions**, enable **MagicBar for YouTube** and allow it on `youtube.com`, `suggestqueries.google.com` and `trends.google.com`.
-4. If the extension does not show up, enable **Develop > Allow Unsigned Extensions** (you may need to turn on the Develop menu in Settings > Advanced).
+2. In Safari, enable **Develop > Allow Unsigned Extensions** (turn on the Develop menu in Settings > Advanced first). Safari asks for this again after every restart, because the app is ad-hoc signed.
+3. Open **Settings > Extensions**, enable **MagicBar for YouTube** and allow it on `youtube.com`, `suggestqueries.google.com` and `trends.google.com`.
+
+If you do have Xcode, `./safari/build.sh` generates a regular Xcode project instead.
 
 `content.js` and `background.js` are shared by both browsers. Only `safari/manifest.json` differs: Safari uses a non-persistent background script instead of a service worker.
 
@@ -119,7 +122,9 @@ Safari loads web extensions through a small app wrapper, so the Safari version i
 │   └── dev/                 # Local demo harness with mocked YouTube responses
 ├── safari/                  # Safari version
 │   ├── manifest.json        # Safari manifest (non-persistent background script)
-│   └── build.sh             # Assembles the extension and generates the Xcode project
+│   ├── build-clt.sh         # Builds the Safari app with the Command Line Tools only
+│   ├── build.sh             # Alternative: generates an Xcode project (needs Xcode)
+│   └── src/                 # Swift wrapper app and extension handler
 ├── LICENSE
 └── README.md
 ```
@@ -139,7 +144,7 @@ python3 -m http.server 8765
 - YouTube does not expose your search history through any page or API. MagicBar reads it from the native dropdown and from what you search while the extension is installed, so it starts small and grows with use.
 - The _trending-down_ indicator needs a few days of readings: Google only publishes what is trending now, and a drop is detected by comparing readings over time. Only ~10 terms per country are published, so most searches will have no indicator.
 - "Most watched channels" are computed from the portion of your history that YouTube returns (the most recent entries), not your lifetime history.
-- On Safari, permissions are granted by the user in Settings > Extensions, and the Xcode project is generated locally; no prebuilt app is distributed.
+- On Safari, permissions are granted by the user in Settings > Extensions, and the app is built locally and ad-hoc signed; no prebuilt app is distributed.
 - YouTube changes its internal structures from time to time. If a section stops filling, please open an issue.
 
 ## 👨‍💻 Development
