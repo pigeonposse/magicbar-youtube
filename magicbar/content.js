@@ -22,17 +22,18 @@
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
       Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
-      if (data.v !== 8) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 8; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 9) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 9; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
       cb && cb();
     });
   }
+  const ownWrites = new Set();
   function save(now) {
     clearTimeout(saveTimer);
-    const run = () => { try { if (alive()) chrome.storage.local.set({ [KEY]: data }); } catch { /* contexto invalidado */ } };
+    const run = () => { try { if (alive()) { data.w = Math.random().toString(36).slice(2); ownWrites.add(data.w); if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value); chrome.storage.local.set({ [KEY]: data }); } } catch { /* contexto invalidado */ } };
     if (now) run(); else saveTimer = setTimeout(run, 250);
   }
   // si la pestaña se cierra o navega con un guardado pendiente, se vuelca en el acto
@@ -41,6 +42,8 @@
   if (alive()) {
     chrome.storage.onChanged.addListener((ch, area) => {
       if (area === 'local' && ch[KEY] && ch[KEY].newValue) {
+        // las escrituras propias no sustituyen los datos: las tareas en curso siguen mutando el mismo objeto
+        if (ownWrites.has(ch[KEY].newValue.w)) return;
         data = ch[KEY].newValue;
         if (state.open) render();
       }
