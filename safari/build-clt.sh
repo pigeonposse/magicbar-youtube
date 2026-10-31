@@ -8,6 +8,8 @@ APPEX="$OUT/Contents/PlugIns/MagicBar Extension.appex"
 rm -rf build
 mkdir -p "$OUT/Contents/MacOS" "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
 
+mkdir -p "$OUT/Contents/Resources"
+cp src/AppIcon.icns "$OUT/Contents/Resources/"
 cp src/App-Info.plist "$OUT/Contents/Info.plist"
 cp src/Ext-Info.plist "$APPEX/Contents/Info.plist"
 
