@@ -951,8 +951,9 @@
   /* — piezas — */
 
   function avatar(c) {
-    const hue = [...c.name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360;
-    const box = h('span', { class: 'avatar', style: `background:hsl(${hue} 45% 42%)` }, (c.name[0] || '?').toUpperCase());
+    const nm = c.name || c.handle || '';
+    const hue = [...nm].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360;
+    const box = h('span', { class: 'avatar', style: `background:hsl(${hue} 45% 42%)` }, (nm[0] || '?').toUpperCase());
     if (c.avatar) {
       const img = h('img', { src: c.avatar, alt: '', referrerpolicy: 'no-referrer' });
       img.addEventListener('error', () => img.remove());
