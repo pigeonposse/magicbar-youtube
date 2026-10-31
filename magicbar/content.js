@@ -48,7 +48,7 @@
 
   function recordSearch(q) {
     q = (q || '').trim();
-    if (!q) return;
+    if (!q || q === 'undefined') return;
     data.searches = data.searches.filter((s) => s.q.toLowerCase() !== q.toLowerCase());
     data.searches.unshift({ q, ts: Date.now() });
     data.searches.length = Math.min(data.searches.length, LIMITS.searchesKept);
@@ -464,6 +464,8 @@
         fetchPage('/feed/subscriptions').catch(() => ({ json: null, html: '' })),
       ]);
       const t0 = Date.now();
+      const cnt = (pg) => { const c = {}; if (pg.json) walk(pg.json, (o) => { for (const k of ['videoRenderer', 'gridVideoRenderer', 'lockupViewModel', 'shortsLockupViewModel', 'channelRenderer', 'gridChannelRenderer', 'richItemRenderer']) if (o[k]) c[k] = (c[k] || 0) + 1; }); return (pg.json ? 'json' : 'NOJSON') + ' ' + pg.html.length + ' ' + JSON.stringify(c); };
+      lastDbg = 'hist ' + cnt(hist) + ' | subs ' + cnt(subs) + ' | feed ' + cnt(feed);
       // solo el contenido principal de la pestaña (sin barras laterales ni recomendaciones)
       const histMain = hist.json && ((hist.json.contents && hist.json.contents.twoColumnBrowseResultsRenderer &&
         hist.json.contents.twoColumnBrowseResultsRenderer.tabs && hist.json.contents.twoColumnBrowseResultsRenderer.tabs[0] &&
@@ -491,6 +493,7 @@
       await resolveAll(Object.values(data.videos).sort((a, b) => b.ts - a.ts), 60);
       rebuildChannels();
       data.lastSync = t0;
+      lastDbg += ' | names ' + chans.filter((c) => c.name).length + '/' + chans.length + ' vids ' + vids.length + ' news ' + news.length;
       data.syncStat = { videos: vids.length, channels: chans.length, news: news.length };
       save();
     } finally {
@@ -509,7 +512,7 @@
     nodes.forEach((n) => {
       const left = n.querySelector('.ytSuggestionComponentLeftContainer, .ytSearchboxComponentSuggestionText, .sbqs_c');
       const t = ((left && left.textContent) || n.getAttribute('aria-label') || n.textContent || '').replace(/\s+/g, ' ').trim();
-      if (t && t.length < 120 && !native.includes(t) && !data.hidden.includes(t.toLowerCase())) native.push(t);
+      if (t && t !== 'undefined' && t.length < 120 && !native.includes(t) && !data.hidden.includes(t.toLowerCase())) native.push(t);
     });
     if (!native.length) return;
     const now = Date.now();
