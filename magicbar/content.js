@@ -915,6 +915,7 @@
           related = [...featured, ...fromVideos].filter((c) => !seenR.has(c.id) && seenR.add(c.id)).slice(0, 6);
         }
         const res = { q, at: Date.now(), videos: videos.map((x) => ({ ...x, imp: true })), channels, related, error: !mixed && !chJson };
+        lastDbg = 'q=' + q + ' intent=' + intent + ' mixed=' + (mixed ? 'ok' : 'null') + ' chJson=' + (chJson ? 'ok' : 'null') + ' ch=' + channels.length + ' v=' + videos.length + ' first=' + (channels[0] ? JSON.stringify([channels[0].name, channels[0].id, channels[0].url]) : '-') + ' raw=' + (chJson ? extractChannels(chJson).length : 0) + '/' + (mixed ? extractChannels(mixed).length : 0);
         console.debug('[MagicBar] resultados', q, { intent, videos: res.videos.length, channels: channels.length, error: res.error });
         if (!res.error) resultsCache.set(q, res);
         if (ctrl !== resultsCtrl) return;
@@ -1248,6 +1249,7 @@
         if (vids.length) section(t(27), vGrid(vids.slice(0, 4))); else if (loading) section(t(27), skeleton('v', 4));
         if (remoteCh.length) section(t(28), chGrid(remoteCh.slice(0, 3), false)); else if (loading) section(t(28), skeleton('ch', 2));
       }
+      if (state.query.trim() && lastDbg) right.append(h('div', { class: 'empty', text: lastDbg }));
       if (intent !== 'short' && !loading && !right.children.length) right.append(h('div', { class: 'empty', text: t(30) }));
 
       panel.classList.toggle('loading', !!state.pending);
