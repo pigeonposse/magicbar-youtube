@@ -21,8 +21,8 @@
     if (!alive()) return;
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
-      if (data.v !== 3) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 3; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 4) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 4; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
