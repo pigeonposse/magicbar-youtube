@@ -1,4 +1,4 @@
-# MagicBar for YouTube _(Chrome, Brave, Edge and other Chromium browsers)_
+# MagicBar for YouTube _(Chrome, Brave, Edge, other Chromium browsers and Safari)_
 
 [![HEADER MagicBar for YouTube](docs/banner.png)](docs/banner.png)
 
@@ -79,7 +79,9 @@ MagicBar reads your account with **your own signed-in session**, from inside `yo
 | `https://suggestqueries.google.com/*` | Live text suggestions. |
 | `https://trends.google.com/*` | Trending indicators. |
 
-## 📦 Installation (developer mode)
+## 📦 Installation
+
+### Chrome, Brave, Edge and other Chromium browsers (developer mode)
 
 1. Download or clone this repository.
 2. Open `chrome://extensions` and enable **Developer mode**.
@@ -87,6 +89,22 @@ MagicBar reads your account with **your own signed-in session**, from inside `yo
 4. Open [youtube.com](https://www.youtube.com), click the search bar and enjoy.
 
 > After reloading the extension, also reload your YouTube tabs. Tabs that were open keep an old copy of the extension that can no longer save data.
+
+### Safari (macOS)
+
+Safari loads web extensions through a small app wrapper, so the Safari version is generated from the same sources as the Chromium one. You need macOS with **Xcode** installed (the Command Line Tools alone are not enough).
+
+1. Run the build script:
+
+   ```bash
+   ./safari/build.sh
+   ```
+
+2. Open `safari/project/MagicBar for YouTube/MagicBar for YouTube.xcodeproj` in Xcode and press **Run**.
+3. In Safari, open **Settings > Extensions**, enable **MagicBar for YouTube** and allow it on `youtube.com`, `suggestqueries.google.com` and `trends.google.com`.
+4. If the extension does not show up, enable **Develop > Allow Unsigned Extensions** (you may need to turn on the Develop menu in Settings > Advanced).
+
+`content.js` and `background.js` are shared by both browsers. Only `safari/manifest.json` differs: Safari uses a non-persistent background script instead of a service worker.
 
 ## 🗂 Project structure
 
@@ -99,6 +117,9 @@ MagicBar reads your account with **your own signed-in session**, from inside `yo
 │   ├── background.js        # Service worker: suggestions and trends (CORS-free fetch)
 │   ├── icons/               # 16/32/48/128 px icons + logo.svg
 │   └── dev/                 # Local demo harness with mocked YouTube responses
+├── safari/                  # Safari version
+│   ├── manifest.json        # Safari manifest (non-persistent background script)
+│   └── build.sh             # Assembles the extension and generates the Xcode project
 ├── LICENSE
 └── README.md
 ```
@@ -118,6 +139,7 @@ python3 -m http.server 8765
 - YouTube does not expose your search history through any page or API. MagicBar reads it from the native dropdown and from what you search while the extension is installed, so it starts small and grows with use.
 - The _trending-down_ indicator needs a few days of readings: Google only publishes what is trending now, and a drop is detected by comparing readings over time. Only ~10 terms per country are published, so most searches will have no indicator.
 - "Most watched channels" are computed from the portion of your history that YouTube returns (the most recent entries), not your lifetime history.
+- On Safari, permissions are granted by the user in Settings > Extensions, and the Xcode project is generated locally; no prebuilt app is distributed.
 - YouTube changes its internal structures from time to time. If a section stops filling, please open an issue.
 
 ## 👨‍💻 Development
