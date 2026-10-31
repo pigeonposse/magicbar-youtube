@@ -21,8 +21,8 @@
     if (!alive()) return;
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
-      if (data.v !== 4) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 4; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 5) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 5; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
@@ -163,7 +163,7 @@
      Lee las mismas páginas que ve el usuario (/feed/history, /feed/channels)
      con su sesión y extrae los datos de ytInitialData. */
 
-  let lastDbg = '';
+  let lastDbg = '', searchDbg = '';
   const dbg = (m) => { lastDbg = m; try { console.warn('[MagicBar]', m); } catch { /* sin consola */ } };
   async function fetchPage(path, signal) {
     let r;
@@ -493,6 +493,8 @@
       await resolveAll(Object.values(data.videos).sort((a, b) => b.ts - a.ts), 60);
       rebuildChannels();
       data.lastSync = t0;
+      const nv = vids.filter((v) => !v.short);
+      lastDbg += ' | long ' + nv.length + ' ch ' + nv.filter((v) => v.channel).length + ' key ' + nv.filter((v) => v.channelKey).length + ' trusted ' + nv.filter((v) => v.trusted).length + ' first ' + JSON.stringify(nv[0] || null).slice(0, 260);
       lastDbg += ' | names ' + chans.filter((c) => c.name).length + '/' + chans.length + ' vids ' + vids.length + ' news ' + news.length;
       data.syncStat = { videos: vids.length, channels: chans.length, news: news.length };
       save();
@@ -915,7 +917,7 @@
           related = [...featured, ...fromVideos].filter((c) => !seenR.has(c.id) && seenR.add(c.id)).slice(0, 6);
         }
         const res = { q, at: Date.now(), videos: videos.map((x) => ({ ...x, imp: true })), channels, related, error: !mixed && !chJson };
-        lastDbg = 'q=' + q + ' intent=' + intent + ' mixed=' + (mixed ? 'ok' : 'null') + ' chJson=' + (chJson ? 'ok' : 'null') + ' ch=' + channels.length + ' v=' + videos.length + ' first=' + (channels[0] ? JSON.stringify([channels[0].name, channels[0].id, channels[0].url]) : '-') + ' raw=' + (chJson ? extractChannels(chJson).length : 0) + '/' + (mixed ? extractChannels(mixed).length : 0);
+        searchDbg = 'q=' + q + ' intent=' + intent + ' mixed=' + (mixed ? 'ok' : 'null') + ' chJson=' + (chJson ? 'ok' : 'null') + ' ch=' + channels.length + ' v=' + videos.length + ' first=' + (channels[0] ? JSON.stringify([channels[0].name, channels[0].id, channels[0].url]) : '-') + ' raw=' + (chJson ? extractChannels(chJson).length : 0) + '/' + (mixed ? extractChannels(mixed).length : 0);
         console.debug('[MagicBar] resultados', q, { intent, videos: res.videos.length, channels: channels.length, error: res.error });
         if (!res.error) resultsCache.set(q, res);
         if (ctrl !== resultsCtrl) return;
@@ -924,6 +926,7 @@
         if (state.open) render();
       } catch (e) {
         if (e && e.name === 'AbortError' && !ctrl.timedOut) return;
+        searchDbg = 'ERR ' + (e && e.message) + ' @ ' + String(e && e.stack).split('\n')[0].slice(0, 90);
         if (ctrl !== resultsCtrl) return;
         state.remote = { q, at: Date.now(), videos: [], channels: [], error: true };
         state.pending = false;
@@ -1249,7 +1252,7 @@
         if (vids.length) section(t(27), vGrid(vids.slice(0, 4))); else if (loading) section(t(27), skeleton('v', 4));
         if (remoteCh.length) section(t(28), chGrid(remoteCh.slice(0, 3), false)); else if (loading) section(t(28), skeleton('ch', 2));
       }
-      if (state.query.trim() && lastDbg) right.append(h('div', { class: 'empty', text: lastDbg }));
+      if (state.query.trim() && searchDbg) right.append(h('div', { class: 'empty', text: searchDbg }));
       if (intent !== 'short' && !loading && !right.children.length) right.append(h('div', { class: 'empty', text: t(30) }));
 
       panel.classList.toggle('loading', !!state.pending);
