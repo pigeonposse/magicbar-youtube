@@ -4,7 +4,7 @@
   window.__magicbar = true;
 
   const KEY = 'magicbar:v1';
-  const LIMITS = { searchesShown: 10, searchesKept: 50, videosKept: 300, recentVideos: 2, feedVideos: 5, topChannels: 4 };
+  const LIMITS = { searchesShown: 10, searchesKept: 50, videosKept: 300, recentVideos: 2, feedVideos: 5, topChannels: 4, homeChannels: 10 };
   const REWATCH_GAP = 30 * 60 * 1000;
   const SYNC_EVERY = 30 * 60 * 1000;
 
@@ -22,8 +22,8 @@
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
       Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
-      if (data.v !== 9) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 9; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 10) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 10; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
@@ -755,13 +755,17 @@
     if (!box) return;
     const r = box.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
-    const w = Math.min(1120, vw - 24);
+    const w = Math.min(1280, vw - 24);
     const left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, vw - w - 12));
     panel.style.width = w + 'px';
     panel.style.left = left + 'px';
     panel.style.top = r.bottom + 8 + 'px';
     panel.style.maxHeight = `calc(100vh - ${r.bottom + 8 + 16}px)`;
+    // la columna de búsquedas llega justo hasta el borde izquierdo de la barra: «De quienes sigues» queda alineada con ella
+    const lw = Math.max(170, Math.min(320, r.left - left - 36));
+    panel.style.setProperty('--lw', lw + 'px');
     panel.classList.toggle('narrow', w < 860);
+    panel.classList.toggle('compact', w >= 860 && w < 900);
   }
 
   function open(input) {
@@ -1132,17 +1136,17 @@
       h('div', { class: 'sk ' + kind }, h('span', { class: 'sk-a' }), h('span', { class: 'sk-t' }))));
   }
 
-  function channelCard(c, big) {
+  function channelCard(c, big, tile) {
     const sub = c.sub || isSub(c);
-    return h('a', { class: 'ch' + (big ? ' big' : ''), href: channelUrl(c), 'data-nav': '', title: c.count ? countLabel(c.count) : null, onclick: () => { if (c.remote || state.query.trim()) recordVisit(c); } },
+    return h('a', { class: 'ch' + (big ? ' big' : '') + (tile ? ' tile' : ''), href: channelUrl(c), 'data-nav': '', title: c.count ? countLabel(c.count) : null, onclick: () => { if (c.remote || state.query.trim()) recordVisit(c); } },
       avatar(c),
       h('span', { class: 'cinfo' },
         h('span', { class: 'cn' }, c.name, c.verified && verifiedIcon(), sub && c.remote !== undefined && h('span', { class: 'tag', text: t(15) })),
-        h('span', { class: 'cm', text: c.meta || c.stats || (sub ? t(15) : '') })));
+        h('span', { class: 'cm', text: (tile && c.subs) || c.meta || c.stats || (sub ? t(15) : '') })));
   }
 
-  const topChannels = (list) =>
-    list.sort((a, b) => b.count - a.count || (b.sub ? 1 : 0) - (a.sub ? 1 : 0) || b.ts - a.ts).slice(0, LIMITS.topChannels);
+  const topChannels = (list, n = LIMITS.topChannels) =>
+    list.sort((a, b) => b.count - a.count || (b.sub ? 1 : 0) - (a.sub ? 1 : 0) || b.ts - a.ts).slice(0, n);
 
   function setQuery(q) {
     const input = state.input;
@@ -1159,7 +1163,7 @@
   function render() {
     try { renderInner(); } catch (e) {
       console.error('[MagicBar] error al pintar', e);
-      try { panel.replaceChildren(h('div', { class: 'empty', text: t(30) + ' · ' + (e && e.message) + ((e && e.stack) ? ' @ ' + String(e.stack).split('\n')[0].slice(0, 80) : '') })); navEls = []; } catch { /* sin panel */ }
+      try { panel.replaceChildren(h('div', { class: 'empty', text: t(30) })); navEls = []; } catch { /* sin panel */ }
     }
   }
 
@@ -1265,7 +1269,6 @@
         if (vids.length) section(t(27), vGrid(vids.slice(0, 4))); else if (loading) section(t(27), skeleton('v', 4));
         if (remoteCh.length) section(t(28), chGrid(remoteCh.slice(0, 3), false)); else if (loading) section(t(28), skeleton('ch', 2));
       }
-      if (state.query.trim() && searchDbg) right.append(h('div', { class: 'empty', text: searchDbg }));
       if (intent !== 'short' && !loading && !right.children.length) right.append(h('div', { class: 'empty', text: t(30) }));
 
       panel.classList.toggle('loading', !!state.pending);
@@ -1284,21 +1287,21 @@
     if (news.length) news.forEach((v) => c2.append(videoCard(v)));
     else c2.append(h('div', { class: 'empty', text: syncing ? t(10) : t(9) }));
 
-    if (lastDbg) c2.append(h('div', { class: 'empty', style: 'font-size:11px;opacity:.7', text: lastDbg }));
-
-    /* columna 3: últimos 3 vídeos del historial + 4 canales más vistos */
+    /* columna 3: los canales que más ves (2 × 5) */
     const c3 = h('div', { class: 'col' });
-    const vids = videos.slice(0, LIMITS.recentVideos);
-    const chs = topChannels(channels);
-    c3.append(sectionTitle(t(4), morePill('/feed/history')));
-    if (vids.length) vids.forEach((v) => c3.append(videoCard(v)));
+    const chs = topChannels(channels, LIMITS.homeChannels);
+    c3.append(sectionTitle(t(5), morePill('/feed/channels')));
+    if (chs.length) c3.append(h('div', { class: 'grid2 tiles' }, chs.map((c) => channelCard(c, false, true))));
     else c3.append(h('div', { class: 'empty', text: syncing ? t(12) : t(11) }));
-    if (chs.length) {
-      c3.append(sectionTitle(t(5), morePill('/feed/channels')));
-      c3.append(h('div', { class: 'grid2' }, chs.map((c) => channelCard(c, false))));
-    }
 
-    panel.replaceChildren(h('div', { class: 'cols' }, c1, c2, c3));
+    /* columna 4: últimos vídeos del historial */
+    const c4 = h('div', { class: 'col' });
+    const vids = videos.slice(0, LIMITS.recentVideos);
+    c4.append(sectionTitle(t(4), morePill('/feed/history')));
+    if (vids.length) vids.forEach((v) => c4.append(videoCard(v)));
+    else c4.append(h('div', { class: 'empty', text: syncing ? t(12) : t(11) }));
+
+    panel.replaceChildren(h('div', { class: 'cols home' }, c1, c2, c3, c4));
     navEls = [...panel.querySelectorAll('[data-nav]')];
     state.active = -1;
     place();
@@ -1418,6 +1421,15 @@
     a { color:inherit; text-decoration:none; }
     button { font:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0; }
     .cols { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 20px; padding:8px 16px 14px; overflow-y:auto; }
+    .cols.home { grid-template-columns:var(--lw,240px) minmax(0,1fr) minmax(0,1.4fr) minmax(0,.85fr); }
+    .compact .cols.home { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .narrow .cols.home { grid-template-columns:minmax(0,1fr); }
+    .tiles { grid-template-rows:repeat(5,auto); grid-auto-flow:column; gap:10px 12px; }
+    .ch.tile { gap:10px; padding:5px 6px; align-items:center; }
+    .ch.tile .avatar { width:52px; height:52px; font-size:21px; }
+    .ch.tile .cn { font-size:13.5px; }
+    .ch.tile .cm { font-size:11.5px; }
+    .ch.tile .cm { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.3; }
     .narrow .span2 { grid-column:auto; }
     .narrow .cols { grid-template-columns:minmax(0,1fr); }
     .title { display:flex; justify-content:flex-start; gap:10px; align-items:center; margin:12px 0 6px; font-size:12px;

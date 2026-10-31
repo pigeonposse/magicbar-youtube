@@ -13,13 +13,14 @@ It replaces YouTube's native suggestions dropdown and works with your own accoun
 
 ### When you click the bar (empty search)
 
-Three columns with your own data:
+Four columns with your own data:
 
 | Column | Content |
 | --- | --- |
 | **Recent searches** | Your last 10 entries, newest first. Searches and accounts you opened from a search live in the same list. |
-| **From people you follow** | The latest videos from your subscriptions feed, with a _See more_ pill linking to `/feed/subscriptions`. |
-| **Your history** | Your last 2 watched videos plus the **4 channels you watch the most**, with their real avatar, subscribers and total number of videos. _See more_ pills link to `/feed/history` and `/feed/channels`. |
+| **From people you follow** | The latest videos from your subscriptions feed, aligned with the left edge of the search bar, with a _See more_ pill linking to `/feed/subscriptions`. |
+| **Most watched** | The 10 channels you watch the most (2 columns × 5) with their real round avatar and subscribers. A _See more_ pill links to `/feed/channels`. |
+| **Your history** | Your last 2 watched videos, with a _See more_ pill linking to `/feed/history`. |
 
 ### When you type (search intent system)
 
