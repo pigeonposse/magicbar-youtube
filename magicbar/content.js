@@ -22,8 +22,8 @@
     chrome.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
       Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
-      if (data.v !== 7) { // v3: canales reconstruidos desde oEmbed (datos fiables)
-        data.v = 7; data.channels = {}; data.lastSync = 0;
+      if (data.v !== 8) { // v3: canales reconstruidos desde oEmbed (datos fiables)
+        data.v = 8; data.channels = {}; data.lastSync = 0;
         Object.values(data.videos).forEach((v) => { if (v.imp) { v.ok = false; v.bad = false; } });
         save();
       }
@@ -168,7 +168,7 @@
   const dbg = (m) => { lastDbg = m; try { console.warn('[MagicBar]', m); } catch { /* sin consola */ } };
   async function fetchPage(path, signal) {
     let r;
-    try { r = await fetch(location.origin + path, { credentials: 'include', signal }); }
+    try { r = await fetch(location.origin + path, { credentials: 'include', signal: signal || AbortSignal.timeout(10000) }); }
     catch (e) { dbg(path + ' fetch error: ' + (e && e.message)); throw e; }
     if (!r.ok) { dbg(path + ' HTTP ' + r.status); return { json: null, html: '' }; }
     const html = await r.text();
@@ -331,7 +331,7 @@
 
   async function ogAvatar(ch, path) {
     try {
-      const r = await fetch(location.origin + path, { credentials: 'include' });
+      const r = await fetch(location.origin + path, { credentials: 'include', signal: AbortSignal.timeout(10000) });
       if (!r.ok) return false;
       const html = await r.text();
       const m = html.match(/<meta property="og:image" content="([^"]+)"/);
@@ -406,7 +406,12 @@
     avatarsBusy = true;
     todo.forEach((c) => { c.avT3 = now; });
     try {
-      const got = await Promise.all(todo.map(async (c) => (await enrichChannel(c)) || (!c.avatar && (await fetchChannelAvatar(c)))));
+      const capped = (p) => Promise.race([p, new Promise((res) => setTimeout(() => res(false), 15000))]);
+      const got = await Promise.all(todo.map(async (c) => {
+        const ok = (await capped(enrichChannel(c))) || (!c.avatar && (await capped(fetchChannelAvatar(c))));
+        if (ok && state.open && !state.query.trim()) render();
+        return ok;
+      }));
       console.debug('[MagicBar] fotos de canal', todo.map((c, i) => c.name + (got[i] ? ' ✓' : ' ✗')));
       lastDbg = 'enrich ' + got.filter(Boolean).length + '/' + todo.length + ' why=' + enrichWhy + ' c0=' + JSON.stringify([todo[0].key, todo[0].id, todo[0].url, todo[0].avatar && 'av', todo[0].stats]);
       save();
@@ -828,7 +833,7 @@
     if (!cfg) return null;
     const auth = await sapisidHash().catch(() => '');
     const r = await fetch(`${location.origin}/youtubei/v1/${endpoint}?prettyPrint=false&key=${cfg.key}`, {
-      method: 'POST', credentials: 'include', signal,
+      method: 'POST', credentials: 'include', signal: signal || AbortSignal.timeout(10000),
       headers: Object.assign({ 'Content-Type': 'application/json', 'X-Goog-AuthUser': '0', 'X-Origin': location.origin }, auth ? { Authorization: auth } : {}),
       body: JSON.stringify(Object.assign({ context: { client: { clientName: 'WEB', clientVersion: cfg.version, hl: document.documentElement.lang || 'es', gl: cfg.gl || undefined } } }, body)),
     });
@@ -1274,7 +1279,9 @@
     const news = data.feed.slice(0, LIMITS.feedVideos);
     c2.append(sectionTitle(t(3), morePill('/feed/subscriptions')));
     if (news.length) news.forEach((v) => c2.append(videoCard(v)));
-    else c2.append(h('div', { class: 'empty', text: syncing ? t(10) : t(9) + (lastDbg ? ' · ' + lastDbg : '') }));
+    else c2.append(h('div', { class: 'empty', text: syncing ? t(10) : t(9) }));
+
+    if (lastDbg) c2.append(h('div', { class: 'empty', style: 'font-size:11px;opacity:.7', text: lastDbg }));
 
     /* columna 3: últimos 3 vídeos del historial + 4 canales más vistos */
     const c3 = h('div', { class: 'col' });
