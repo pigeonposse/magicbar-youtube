@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MagicBar for YouTube",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Turn the YouTube search bar into a panel featuring your recent searches, latest videos, and most-watched channels.",
   "permissions": [
     "storage"
