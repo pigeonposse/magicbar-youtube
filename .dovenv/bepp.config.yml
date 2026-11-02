@@ -6,8 +6,6 @@ shared:
   input:
     chromium: "./dist/chrome"
     firefox: "./dist/firefox"
-    # chromium-mv2: "./dist/firefox"
-    # firefox-mv2: "./dist/firefox"
   output: './dist/exts'
 
 build:
