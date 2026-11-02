@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+		"davidanson.vscode-markdownlint",
+        "shd101wyy.markdown-preview-enhanced",
+        "dbaeumer.vscode-eslint",
+        "jacano.vscode-pnpm",
+        "redhat.vscode-yaml",
+		"editorconfig.editorconfig",
+    ]
+}

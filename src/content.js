@@ -3,6 +3,7 @@
   if (window.__magicbar) return;
   window.__magicbar = true;
 
+  const api = (typeof browser !== 'undefined') ? browser : chrome;
   const KEY = 'magicbar:v1';
   const LIMITS = { searchesShown: 10, searchesKept: 50, videosKept: 300, recentVideos: 2, feedVideos: 5, topChannels: 4, homeChannels: 10 };
   const REWATCH_GAP = 30 * 60 * 1000;
@@ -15,11 +16,11 @@
   let saveTimer;
   const onYouTube = () => /(^|\.)youtube\.com$/.test(location.hostname) || !!window.__MB_DEV;
   const alive = () => {
-    try { return !!chrome.runtime?.id; } catch { return false; }
+    try { return !!api.runtime?.id; } catch { return false; }
   };
   function load(cb) {
     if (!alive()) return;
-    chrome.storage.local.get(KEY, (r) => {
+    api.storage.local.get(KEY, (r) => {
       if (r && r[KEY]) data = Object.assign(emptyData(), r[KEY]);
       Object.keys(data.channels || {}).forEach((k) => { if (!data.channels[k] || typeof data.channels[k].name !== 'string' || !data.channels[k].name) delete data.channels[k]; });
       if (data.v !== 10) { // v3: canales reconstruidos desde oEmbed (datos fiables)
@@ -33,14 +34,14 @@
   const ownWrites = new Set();
   function save(now) {
     clearTimeout(saveTimer);
-    const run = () => { try { if (alive()) { data.w = Math.random().toString(36).slice(2); ownWrites.add(data.w); if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value); chrome.storage.local.set({ [KEY]: data }); } } catch { /* contexto invalidado */ } };
+    const run = () => { try { if (alive()) { data.w = Math.random().toString(36).slice(2); ownWrites.add(data.w); if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value); api.storage.local.set({ [KEY]: data }); } } catch { /* contexto invalidado */ } };
     if (now) run(); else saveTimer = setTimeout(run, 250);
   }
   // si la pestaña se cierra o navega con un guardado pendiente, se vuelca en el acto
   window.addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(true); });
   if (alive()) {
-    chrome.storage.onChanged.addListener((ch, area) => {
+    api.storage.onChanged.addListener((ch, area) => {
       if (area === 'local' && ch[KEY] && ch[KEY].newValue) {
         // las escrituras propias no sustituyen los datos: las tareas en curso siguen mutando el mismo objeto
         if (ownWrites.has(ch[KEY].newValue.w)) return;
@@ -133,7 +134,7 @@
   function grabAvatar(channelKey, channel, tries) {
     const img = document.querySelector('ytd-watch-metadata #owner img, ytd-watch-metadata ytd-video-owner-renderer img');
     let src = img && img.src;
-    if (src && /^https:\/\/yt3\./.test(src)) {
+    if (src && src.startsWith('https://yt3.')) {
       src = normAvatar(src);
       const ch = data.channels[channelKey || 'name:' + channel];
       if (ch && ch.avatar !== src) { ch.avatar = src; save(); }
@@ -232,7 +233,7 @@
   function normAvatar(u) {
     if (!u) return '';
     if (u.startsWith('//')) u = 'https:' + u;
-    return /^https:\/\//.test(u) ? u.replace(/=s\d+(-[^?]*)?$/, '=s96-c-k-c0x00ffffff-no-rj') : '';
+    return u.startsWith('https://') ? u.replace(/=s\d+(-[^?]*)?$/, '=s96-c-k-c0x00ffffff-no-rj') : '';
   }
   function lockupAvatar(lk) {
     let src = '';
@@ -381,7 +382,7 @@
       const texts = [];
       walk(j.header, (n) => { if (typeof n.content === 'string' && n.content.length < 60) texts.push(n.content); });
       const handle = texts.find((x) => x.startsWith('@')) || '';
-      const nums = texts.filter((x) => !x.startsWith('@') && /\d/.test(x) && !/^\.\.\./.test(x));
+      const nums = texts.filter((x) => !x.startsWith('@') && /\d/.test(x) && !x.startsWith('...'));
       const th = (cm.avatar && cm.avatar.thumbnails) || [];
       let av = th.length ? normAvatar(th[th.length - 1].url) : '';
       if (!av) walk(j.header, (n) => { if (!av && n.avatarViewModel && n.avatarViewModel.image && n.avatarViewModel.image.sources) av = normAvatar(n.avatarViewModel.image.sources.slice(-1)[0].url); });
@@ -962,8 +963,8 @@
     suggestTimer = setTimeout(() => {
       if (!alive()) return;
       try {
-        chrome.runtime.sendMessage({ type: 'suggest', q, lang: document.documentElement.lang || 'es' }, (res) => {
-          if (chrome.runtime.lastError || !res || seq !== suggestSeq) return;
+        api.runtime.sendMessage({ type: 'suggest', q, lang: document.documentElement.lang || 'es' }, (res) => {
+          if (api.runtime.lastError || !res || seq !== suggestSeq) return;
           suggestCache.set(q, res.items);
           state.suggestions = res.items;
           if (state.open && state.query.trim() === q) render();
@@ -1008,9 +1009,9 @@
     if (tr && Date.now() - tr.at < TREND_EVERY && tr.geo === trendGeo()) return;
     trendsBusy = true;
     try {
-      chrome.runtime.sendMessage({ type: 'trends', geo: trendGeo() }, (res) => {
+      api.runtime.sendMessage({ type: 'trends', geo: trendGeo() }, (res) => {
         trendsBusy = false;
-        if (chrome.runtime.lastError || !res || !res.ok) return;
+        if (api.runtime.lastError || !res || !res.ok) return;
         const now = Date.now(), geo = trendGeo();
         const old = data.trends && data.trends.geo === geo ? data.trends : null;
         const latest = {};
@@ -1210,7 +1211,7 @@
       const intent = q.length <= 2 ? 'short' : detectIntent(q, remoteCh);
       const main = remoteCh[0];
       const pool = (r && r.videos.length ? r.videos : []).map((v, i) => ({
-        v, score: -i * 0.5 + (findChannel(v.channelKey, v.channelId, v.channel)?.sub ? 4 : 0) + (ownedBy(v, main) && /^channel/.test(intent) ? 3 : 0),
+        v, score: -i * 0.5 + (findChannel(v.channelKey, v.channelId, v.channel)?.sub ? 4 : 0) + (ownedBy(v, main) && intent.startsWith('channel') ? 3 : 0),
       })).sort((a, b) => b.score - a.score).map((x) => x.v);
       const vids = pool.length ? pool : (r ? local.vids : []);
 

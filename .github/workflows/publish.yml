@@ -1,0 +1,150 @@
+###############################################################################
+# PLBLISH CHROME EXTENSION AND FIREFOX EXTENSION
+###############################################################################
+
+name: Publish
+
+
+###############################################################################
+# ON
+###############################################################################
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Set number for release version'
+        type: string
+        required: true
+
+###############################################################################
+# JOBS
+###############################################################################
+
+jobs:
+
+  build:
+
+    name: Publish web extensions and release in Github
+    # for the Safari build. If set to 'macos-13-xlarge' or 'macos-latest' safari build it will not be compatible with macos Intel processor
+    # @see https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    ###########################################################################
+    # STEPS
+    ###########################################################################
+
+    steps:
+
+     #########################################################################
+      # INIT
+      #########################################################################
+
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+
+      - name: ⬇️🟢 Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: ⬇️🥡 Install pnpm
+        uses: pnpm/action-setup@v3
+
+      - name: ⬇️📦 Install dependencies
+        run: |
+          pnpm install --no-frozen-lockfile
+
+
+      #########################################################################
+      # BUILD PKG
+      #########################################################################
+
+      - name: 🏗 Build
+        run: pnpm build
+
+
+     #########################################################################
+      # GET PKG INFO
+      #########################################################################
+
+      - name: 📦📄 Get package.json data
+        id: pkg
+        run: |
+          echo "description=$(jq -r '.description' ./package.json)" >> $GITHUB_OUTPUT
+          echo "name=$(jq -r '.name' ./package.json)" >> $GITHUB_OUTPUT
+          echo "version=$(jq -r '.version' ./package.json)" >> $GITHUB_OUTPUT 
+          echo "firefox_store_id=$(jq -r '.extra.releases.firefox.storeId' ./package.json)" >> $GITHUB_OUTPUT
+          echo "chrome_store_id=$(jq -r '.extra.releases.chrome.storeId' ./package.json)" >> $GITHUB_OUTPUT
+          echo "edge_store_id=$(jq -r '.extra.releases.edge.storeId' ./package.json)" >> $GITHUB_OUTPUT
+
+      #########################################################################
+      # GITHUB RELEASE
+      #########################################################################
+
+      - name: 🧩🗂️ Create Github release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "${{ steps.pkg.outputs.version }}"
+          name: '${{ steps.pkg.outputs.version }}'
+          draft: false
+          prerelease: false
+          allowUpdates: true
+          artifacts: "dist/exts/*"
+          body: |
+            <p><b> ${{ steps.pkg.outputs.name }} v${{ steps.pkg.outputs.version }}</b></p>
+            <p>${{ steps.pkg.outputs.description }}</p>
+
+            🧩 [CHANGELOG]( https://github.com/pigeonposse/${{ steps.pkg.outputs.name }}/blob/main/CHANGELOG.md)
+            📜 [LICENSE](https://github.com/pigeonposse/${{ steps.pkg.outputs.name }}/blob/main/LICENSE)
+            🔏 [PRIVACY](https://github.com/pigeonposse/${{ steps.pkg.outputs.name }}/blob/main/POLICY.md)
+
+
+     #########################################################################
+      #  PUBLISH IN FIREFOX WEB STORE
+      #########################################################################
+      
+      - name: 🧩🦊 Upload FIREFOX extension
+        uses: wdzeng/firefox-addon@v1
+        with:
+           addon-guid: ${{ steps.pkg.outputs.firefox_store_id }}
+           xpi-path: dist/exts/${{ steps.pkg.outputs.name }}-firefox.zip
+           jwt-issuer: ${{ secrets.FIREFOX_ANGELO_JWT_ISSUER }}
+           jwt-secret: ${{ secrets.FIREFOX_ANGELO_JWT_SECRET }}
+        continue-on-error: true
+
+      #########################################################################
+      #  PUBLISH IN CHROME WEB STORE
+      #########################################################################
+
+      - name: 🧩 Upload CHROME extension
+        uses: wdzeng/chrome-extension@v2
+        with:
+          extension-id: '${{steps.pkg.outputs.chrome_store_id}}'
+          zip-path: dist/exts/${{ steps.pkg.outputs.name }}-chrome.zip
+          publisher-id: '${{ secrets.CHROME_EXTENSION_PUBLISHER_ID }}'
+          client-id: '${{ secrets.CHROME_EXTENSION_CLIENT_ID }}'
+          client-secret: '${{ secrets.CHROME_EXTENSION_CLIENT_SECRET }}'
+          refresh-token: '${{ secrets.CHROME_EXTENSION_REFRESH_TOKEN }}'
+        continue-on-error: true
+
+      #########################################################################
+      # PUBLISH IN EDGE WEB STORE
+      #########################################################################
+
+      - name: 🧩 Upload EDGE extension
+        uses: wdzeng/edge-addon@v2
+        with:
+          product-id: ${{ steps.pkg.outputs.edge_store_id }}
+          client-id: ${{ secrets.EDGE_CLIENT_ID }}
+          api-key: ${{ secrets.EDGE_CLIENT_SECRET }}
+          zip-path: dist/exts/${{ steps.pkg.outputs.name }}-edge.zip
+        continue-on-error: true
+
+
+############################################################################### 

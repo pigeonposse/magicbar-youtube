@@ -1,6 +1,9 @@
+
+const api = (typeof browser !== 'undefined') ? browser : chrome;
+
 // Las sugerencias en vivo se piden desde aquí porque un content script
 // no puede hacer fetch cross-origin con las reglas CORS de la página.
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+api.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === 'trends') {
     // Tendencias de búsqueda del país (RSS público de Google Trends).
     fetch('https://trends.google.com/trending/rss?geo=' + encodeURIComponent(msg.geo || 'US'), { signal: AbortSignal.timeout(8000) })

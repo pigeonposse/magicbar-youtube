@@ -6,8 +6,8 @@
 
 It replaces YouTube's native suggestions dropdown and works with your own account, directly inside `youtube.com`. No servers, no tracking.
 
-[![Channel search - dark mode](docs/screenshot-channel-dark.png)](docs/screenshot-channel-dark.png)
-[![Channel search - light mode](docs/screenshot-channel-light.png)](docs/screenshot-channel-light.png)
+[![Channel search - dark mode](docs/screenshots/screenshot-channel-dark.png)](docs/screenshot-channel-dark.png)
+[![Channel search - light mode](docs/screenshots/screenshot-channel-light.png)](docs/screenshot-channel-light.png)
 
 ## ✨ Features
 

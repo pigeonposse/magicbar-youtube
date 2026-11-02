@@ -1,0 +1,13 @@
+allowBuilds:
+  spawn-sync: true
+overrides:
+  adm-zip@<0.6.1: ^0.6.1
+  ajv@>=7.0.0-alpha.0 <8.18.0: ^8.18.0
+  basic-ftp@<=6.2.0: ^6.2.1
+  compressing@<=1.10.4: ^1.10.5
+  js-yaml@>=4.0.0 <4.3.2: ^4.3.2
+  minimatch@<11.0.1: ^11.0.1
+  shell-quote@<=1.8.4: ^1.9.0
+  tmp@<0.2.6: ^0.2.6
+  toml@<=5.0.0: ^5.0.1
+  uuid@<11.1.1: ^11.1.1

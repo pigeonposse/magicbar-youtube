@@ -1,0 +1,150 @@
+{
+	"name": "magicbar-youtube",
+	"version": "1.0.0",
+	"private": true,
+	"description": "✨📺 A smart YouTube search bar that shows rich results: channels, videos, and suggestions; based on what you're actually looking for.",
+	"keywords": [
+		"chrome-extension",
+		"firefox-extension",
+		"safari-extension",
+		"opera-gx-extension",
+		"brave-extension",
+		"yandex-extension",
+		"edge-extension",
+		"chromium-extension",
+		"browser-extension",
+		"extension",
+		"safari",
+		"chrome",
+		"firefox",
+		"youtube",
+		"yt",
+		"javascript",
+		"js"
+	],
+	"homepage": "https://chrome.google.com/webstore/detail/magicbar-youtube",
+	"bugs": {
+		"url": "https://github.com/pigeonposse/magicbar-youtube/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pigeonposse/magicbar-youtube"
+	},
+	"funding": {
+		"type": "individual",
+		"url": "https://pigeonposse.com/?popup=donate"
+	},
+	"license": "GPL-3.0",
+	"author": {
+		"name": "Alejo Malia",
+		"email": "alejo@pigeonposse.com",
+		"url": "https://github.com/alejomalia"
+	},
+	"contributors": [
+		{
+			"name": "Angelo",
+			"email": "angelo@pigeonposse.com",
+			"url": "https://github.com/angelespejo"
+		}
+	],
+	"type": "module",
+	"scripts": {
+		"build": "pnpm build:firefox && pnpm build:chrome 66 pnpm build:bepp",
+		"build:firefox": "TARGET=firefox vite build",
+		"build:chrome": "TARGET=chrome vite build",
+		"build:bepp": "bepp build --time -c .dovenv/bepp.config.yml",
+		"dev": "pnpm dev:chrome",
+		"dev:chrome": "TARGET=chrome vite dev",
+		"dev:firefox": "TARGET=firefox vite dev",
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"release": "git add . && pnpm release-it"
+	},
+	"devDependencies": {
+		"@bepp/bepp": "~1.3.17",
+		"@release-it/bumper": "8.0.1",
+		"auto-changelog": "~2.7.0",
+		"oxlint": "1.90.0",
+		"release-it": "21.1.2",
+		"vite": "~8.3.5",
+		"vite-plugin-web-extension": "~4.5.1"
+	},
+	"packageManager": "pnpm@12.16.1",
+	"engines": {
+		"node": ">=20.0.0",
+		"pnpm": ">=12.10.0"
+	},
+	"extra": {
+		"releases": {
+			"chrome": {
+				"url": "https://chromewebstore.google.com/detail/magicbar-youtube/lckdmpmkmobhodealiacgklhgeiocflg",
+				"id": "chrome",
+				"name": "Chrome extension",
+				"logo": "googlechrome",
+				"store": true,
+				"storeId": "lckdmpmkmobhodealiacgklhgeiocflg",
+				"type": "extension"
+			},
+			"edge": {
+				"id": "edge",
+				"name": "Edge extension",
+				"logo": "microsoftedge",
+				"url": "https://microsoftedge.microsoft.com/addons/detail/{coming}",
+				"store": true,
+				"storeId": "{coming}",
+				"type": "extension"
+			},
+			"firefox": {
+				"url": "https://addons.mozilla.org/es/firefox/addon/magicbar-youtube/",
+				"id": "firefox",
+				"name": "Firefox extension",
+				"logo": "firefoxbrowser",
+				"store": true,
+				"storeId": "{a2e191e8-b8eb-490b-b282-9f3d2c0332bf}",
+				"type": "extension"
+			},
+			"safari": {
+				"id": "safari",
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-safari.tar.gz",
+				"name": "Safari Extension",
+				"logo": "safari",
+				"type": "extension"
+			},
+			"brave": {
+				"id": "brave",
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-brave.zip",
+				"name": "Brave Extension",
+				"logo": "brave",
+				"type": "extension"
+			},
+			"operaGX": {
+				"id": "opera-gx",
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-opera-gx.zip",
+				"name": "Opera GX Extension",
+				"logo": "operagx",
+				"type": "extension"
+			},
+			"vivaldi": {
+				"id": "vivaldi",
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-vivaldi.zip",
+				"name": "Vivaldi Extension",
+				"logo": "vivaldi",
+				"type": "extension"
+			},
+			"yandex": {
+				"id": "yandex",
+				"name": "Yandex extension",
+				"logo": "googlechrome",
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-yandex.zip",
+				"type": "extension"
+			},
+			"chromium": {
+				"url": "https://github.com/pigeonposse/magicbar-youtube/releases/latest/download/magicbar-youtube-chromium.zip",
+				"id": "chromium",
+				"name": "Chromium Extension",
+				"logo": "googlechrome",
+				"type": "extension"
+			}
+		}
+	}
+}
