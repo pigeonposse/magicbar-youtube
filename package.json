@@ -1,6 +1,6 @@
 {
 	"name": "magicbar-youtube",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": true,
 	"description": "✨📺 A smart YouTube search bar that shows rich results: channels, videos, and suggestions; based on what you're actually looking for.",
 	"keywords": [
