@@ -3,6 +3,8 @@ import webExtension, { readJsonFile } from "vite-plugin-web-extension";
 
 const target = process.env.TARGET === "firefox" ? "firefox": "chrome";
 
+console.log(`Target=${target}`)
+
 export default defineConfig({
   plugins: [webExtension({
     

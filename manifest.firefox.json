@@ -5,9 +5,11 @@
   "description": "Turn the YouTube search bar into a panel featuring your recent searches, latest videos, and most-watched channels.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "dev@pigeonposse.com",
+      "id": "magicbar-yt@pigeonposse.com",
       "data_collection_permissions": {
-        "required": false
+				"required": [
+					"none"
+				]
       }
     }
   },
