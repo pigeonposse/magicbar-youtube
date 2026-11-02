@@ -176,4 +176,5 @@ PigeonPosse is a code development collective. MagicBar is an independent project
 | Name | Role | GitHub |
 | --- | --- | --- |
 | Alejo | Author, Design & Development | [@AlejoMalia](https://github.com/AlejoMalia) |
+| Angelo | Collaborator | [@angelespejo](https://github.com/angelespejo) |
 | PigeonPosse | Collective | [@pigeonposse](https://github.com/pigeonposse) |

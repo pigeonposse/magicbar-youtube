@@ -14,6 +14,7 @@ build:
   - type: chrome
   - type: chromium
   - type: edge
+  - type: firefox
   - type: opera-gx
   # - type: opera
   - type: safari
@@ -22,12 +23,15 @@ build:
   - type: custom
     browserName: vivaldi
     input: "./dist/chrome"
+  
     # For releases in zip
   - type: chrome
     compress: zip
   - type: chromium
     compress: zip
   - type: edge
+    compress: zip
+  - type: firefox
     compress: zip
   - type: yandex
     compress: zip

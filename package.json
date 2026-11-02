@@ -57,8 +57,9 @@
 		"dev:chrome": "TARGET=chrome vite dev",
 		"dev:firefox": "TARGET=firefox vite dev",
 		"lint": "oxlint",
+		"push-main": "git add . && git commit -m '@1' && git push -u origin main",
 		"lint:fix": "oxlint --fix",
-		"release": "git add . && pnpm release-it"
+		"release": "pnpm release-it"
 	},
 	"devDependencies": {
 		"@bepp/bepp": "~1.3.17",
@@ -89,9 +90,9 @@
 				"id": "edge",
 				"name": "Edge extension",
 				"logo": "microsoftedge",
-				"url": "https://microsoftedge.microsoft.com/addons/detail/{coming}",
+				"url": "https://microsoftedge.microsoft.com/addons/detail/0RDCKBLZ6HQ0",
 				"store": true,
-				"storeId": "{coming}",
+				"storeId": "0RDCKBLZ6HQ0",
 				"type": "extension"
 			},
 			"firefox": {
