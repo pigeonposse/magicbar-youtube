@@ -101,7 +101,7 @@
 				"name": "Firefox extension",
 				"logo": "firefoxbrowser",
 				"store": true,
-				"storeId": "{a2e191e8-b8eb-490b-b282-9f3d2c0332bf}",
+				"storeId": "magicbar-yt@pigeonposse.com",
 				"type": "extension"
 			},
 			"safari": {
