@@ -1,11 +1,11 @@
 /**
- * Release it.
+ * Release-it config.
  *
- * @description Release it.
  * @see https://github.com/release-it/release-it
  */
 
-module.exports = {
+/** @type {import('release-it').Config} */
+export default {
 	'plugins' : {
 		'@release-it/bumper' : {
 			'in' : [
