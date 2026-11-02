@@ -57,7 +57,7 @@
 		"dev:chrome": "TARGET=chrome vite dev",
 		"dev:firefox": "TARGET=firefox vite dev",
 		"lint": "oxlint",
-		"push-main": "git add . && git commit -m '@1' && git push -u origin main",
+		"push-main": "bash .dovenv/push.sh",
 		"lint:fix": "oxlint --fix",
 		"release": "release-it"
 	},
